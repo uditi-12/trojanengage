@@ -2,7 +2,7 @@
 import { CalendarDays, MapPin } from "lucide-react";
 import Link from "next/link";
 import { CostBadge, FoodBadge, flyerBackground } from "@/components/event-card";
-import { formatWhen } from "@/lib/time";
+import { formatWhen, isLiveNow } from "@/lib/time";
 import type { EventView } from "@/lib/types";
 
 export function EventRow({ e, right, href }: { e: EventView; right?: React.ReactNode; href?: string }) {
@@ -23,7 +23,7 @@ export function EventRow({ e, right, href }: { e: EventView; right?: React.React
         <div className="mt-1.5 flex flex-wrap gap-1">
           <FoodBadge foodType={e.foodType} />
           <CostBadge cost={e.ticketCost} />
-          {e.status === "live" && <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">LIVE</span>}
+          {isLiveNow(e) && <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">LIVE</span>}
         </div>
       </div>
       {right}

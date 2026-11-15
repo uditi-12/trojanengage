@@ -32,7 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client";
 import { CAMPUS_LABELS, EVENT_TYPE_LABELS, REASON_LABELS, RESTRICTION_LABELS, TAG_LABELS } from "@/lib/taxonomy";
-import { fmt12 } from "@/lib/time";
+import { fmt12, isLiveNow } from "@/lib/time";
 import { pct } from "@/lib/utils";
 import type { EventView, FunnelView } from "@/lib/types";
 
@@ -96,7 +96,7 @@ function Detail({ eventId, orgId }: { eventId: string; orgId: string }) {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-extrabold tracking-tight">{e.title}</h1>
             <Badge variant={e.status === "live" ? "default" : e.status === "published" ? "gold" : e.status === "closed" ? "secondary" : "outline"} className="capitalize">
-              {e.status === "live" && <Radio />} {e.status}
+              {isLiveNow(e) && <Radio />} {e.status === "live" && !isLiveNow(e) ? "check-in open" : e.status}
             </Badge>
             {e.visibility === "members-only" && <Badge variant="outline">Members only</Badge>}
           </div>

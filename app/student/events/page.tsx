@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WeekCalendar, type CalEvent } from "@/components/week-calendar";
 import { api } from "@/lib/client";
+import { isLiveNow } from "@/lib/time";
 import type { ConflictItem, EventView, ScheduleBlockView } from "@/lib/types";
 
 type Reg = { id: string; status: string; hasConflict: boolean; conflictNote: string | null; conflicts: ConflictItem[]; checkedIn: boolean; gaveFeedback: boolean; event: EventView };
@@ -36,7 +37,7 @@ function MyEvents({ id }: { id: string }) {
   };
 
   const active = regs?.filter((r) => r.event.status !== "closed") ?? [];
-  const live = active.filter((r) => r.event.status === "live" && (r.status === "registered" || r.status === "pre-registered"));
+  const live = active.filter((r) => isLiveNow(r.event) && r.status === "registered");
   const saved = active.filter((r) => r.status === "pre-registered");
   const registered = active.filter((r) => r.status === "registered" || r.status === "waitlisted");
   const past = regs?.filter((r) => r.event.status === "closed") ?? [];
@@ -49,7 +50,7 @@ function MyEvents({ id }: { id: string }) {
     endTime: r.event.endTime,
     status: r.status === "registered" ? "registered" : r.status === "waitlisted" ? "waitlisted" : "saved",
     hasConflict: r.hasConflict,
-    live: r.event.status === "live",
+    live: isLiveNow(r.event),
   }));
 
   const Clash = ({ r }: { r: Reg }) =>

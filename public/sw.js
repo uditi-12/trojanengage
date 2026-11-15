@@ -2,7 +2,7 @@
 // - Hashed build assets & icons: cache-first (immutable).
 // - Pages: network-first, falling back to the last cached copy, then /offline.
 // - API calls are never cached (always live data).
-const VERSION = "trojanengage-v1";
+const VERSION = "trojanengage-v2";
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 

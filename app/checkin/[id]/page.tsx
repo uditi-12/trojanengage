@@ -7,7 +7,7 @@ import { useSession } from "@/components/session-provider";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/client";
 
-/** QR landing page: records the check-in for the current student, then redirects to feedback. */
+/** QR landing page: records the check-in for the current student, then returns to the event page (where feedback opens). */
 export default function CheckInPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { session, loading } = useSession();
@@ -23,7 +23,7 @@ export default function CheckInPage({ params }: { params: { id: string } }) {
         const ev = await api<{ event: { title: string; flyerHeadline: string } }>(`/api/events/${params.id}`);
         const r = await api<{ ok: boolean; already?: boolean; reason?: string }>("/api/checkin", { body: { eventId: params.id } });
         setState({ status: "done", title: ev.event.flyerHeadline || ev.event.title, msg: r.already ? "You were already checked in." : "You're checked in!" });
-        setTimeout(() => router.push(`/feedback/${params.id}`), 1600);
+        setTimeout(() => router.push(`/event/${params.id}`), 1600);
       } catch (e) {
         setState({ status: "error", msg: (e as Error).message });
       }
@@ -43,7 +43,7 @@ export default function CheckInPage({ params }: { params: { id: string } }) {
           </div>
           <h1 className="mt-6 text-2xl font-extrabold">{state.status === "done" ? state.msg : "Checking you in…"}</h1>
           {state.title && <p className="mt-1 text-muted-foreground">{state.title}</p>}
-          {state.status === "done" && <p className="mt-4 text-sm text-muted-foreground">Taking you to a 10-second feedback card…</p>}
+          {state.status === "done" && <p className="mt-4 text-sm text-muted-foreground">Taking you back to the event — feedback is now open there.</p>}
         </motion.div>
       ) : (
         <div>

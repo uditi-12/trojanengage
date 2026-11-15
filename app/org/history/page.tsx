@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client";
 import { REASON_LABELS } from "@/lib/taxonomy";
-import { formatWhen } from "@/lib/time";
+import { formatWhen, isLiveNow } from "@/lib/time";
 import { cn, pct } from "@/lib/utils";
 import type { EventView, FunnelView } from "@/lib/types";
 
@@ -93,10 +93,10 @@ function History({ orgId }: { orgId: string }) {
             {!events && [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20" />)}
             {events?.length === 0 && <EmptyState title="No events yet" body="Create your first event or import past ones." action={<Link href="/org/setup"><Button>Import past events</Button></Link>} />}
             {events?.map((e) => {
-              const st = STATUS[e.status] ?? STATUS.draft;
+              const st = e.status === "live" && !isLiveNow(e) ? { label: "Check-in open", variant: "gold" as const } : STATUS[e.status] ?? STATUS.draft;
               const swipes = e.funnel.rightSwipes + e.funnel.leftSwipes;
               return (
-                <div key={e.id} className={cn("flex flex-wrap items-center gap-4 rounded-2xl border p-3 transition hover:bg-muted/40", e.status === "live" && "border-cardinal bg-cardinal-50/40")}>
+                <div key={e.id} className={cn("flex flex-wrap items-center gap-4 rounded-2xl border p-3 transition hover:bg-muted/40", isLiveNow(e) && "border-cardinal bg-cardinal-50/40")}>
                   <div className="h-12 w-1.5 shrink-0 rounded-full" style={{ background: e.flyerColor }} />
                   <div className="min-w-[200px] flex-1">
                     <div className="flex items-center gap-2">

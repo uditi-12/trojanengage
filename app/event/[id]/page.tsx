@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client";
 import { CAMPUS_LABELS, EVENT_TYPE_LABELS, RESTRICTION_LABELS, TAG_LABELS } from "@/lib/taxonomy";
-import { fmt12 } from "@/lib/time";
+import { fmt12, isLiveNow } from "@/lib/time";
 import type { ConflictItem, EventView, FunnelView } from "@/lib/types";
 
 type Resp = {
@@ -88,8 +88,8 @@ export default function EventPage({ params }: { params: { id: string } }) {
     try {
       const r = await api<{ ok: boolean; reason?: string }>("/api/checkin", { body: { eventId: e.id } });
       if (r.ok) {
-        toast.success("You're checked in! 🎉");
-        router.push(`/feedback/${e.id}`);
+        toast.success("You're checked in! 🎉 Feedback is now open.");
+        await load();
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -116,7 +116,7 @@ export default function EventPage({ params }: { params: { id: string } }) {
       <div className="relative overflow-hidden rounded-3xl p-6 text-white shadow-2xl" style={flyerBackground(e.flyerColor, e.flyerImageUrl)}>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="glass">{EVENT_TYPE_LABELS[e.eventType] ?? e.eventType}</Badge>
-          {e.status === "live" && (
+          {isLiveNow(e) && (
             <Badge className="bg-red-600">
               <Radio /> Live now
             </Badge>
@@ -157,7 +157,7 @@ export default function EventPage({ params }: { params: { id: string } }) {
 
       {isStudent && (
         <div className="mt-4 space-y-2">
-          {e.status === "live" && !me?.checkedIn && (
+          {e.status === "live" && !me?.checkedIn && status === "registered" && (
             <Button size="lg" variant="gold" className="h-14 w-full text-lg" onClick={checkIn} loading={busy}>
               <QrCode /> I&apos;m here — check in
             </Button>
@@ -181,6 +181,9 @@ export default function EventPage({ params }: { params: { id: string } }) {
                 <CheckCircle2 /> {spotsLeft === 0 && e.waitlistEnabled ? "Join waitlist" : "Register"}
               </Button>
             </div>
+          )}
+          {e.status === "live" && !me?.checkedIn && status !== "registered" && status !== "waitlisted" && (
+            <div className="rounded-2xl bg-muted p-3 text-center text-sm font-medium">Register to check in to this event.</div>
           )}
           {status === "registered" && e.status === "published" && (
             <div className="rounded-2xl bg-cardinal-50 p-3 text-center text-sm font-medium text-cardinal">You&apos;re registered. Check-in opens when the event goes live.</div>

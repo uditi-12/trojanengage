@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client";
+import { isLiveNow } from "@/lib/time";
 import { REASON_LABELS, SWIPE_REASONS } from "@/lib/taxonomy";
 import type { RankedEventView } from "@/lib/types";
 
@@ -93,8 +94,8 @@ function Feed({ id }: { id: string }) {
     api<{ pending: { eventId: string; title: string; orgName: string }[] }>(`/api/students/${id}/pending-feedback`)
       .then((d) => setPending(d.pending))
       .catch(() => {});
-    api<{ registrations: { status: string; checkedIn: boolean; event: { id: string; title: string; flyerHeadline: string; status: string } }[] }>(`/api/students/${id}/events`)
-      .then((d) => setLiveNow(d.registrations.filter((r) => r.event.status === "live" && !r.checkedIn && r.status !== "cancelled").map((r) => ({ id: r.event.id, title: r.event.flyerHeadline || r.event.title }))))
+    api<{ registrations: { status: string; checkedIn: boolean; event: { id: string; title: string; flyerHeadline: string; status: string; date: string; endDate: string | null; startTime: string; endTime: string } }[] }>(`/api/students/${id}/events`)
+      .then((d) => setLiveNow(d.registrations.filter((r) => isLiveNow(r.event) && !r.checkedIn && r.status === "registered").map((r) => ({ id: r.event.id, title: r.event.flyerHeadline || r.event.title }))))
       .catch(() => {});
   }, [id]);
   React.useEffect(() => {
