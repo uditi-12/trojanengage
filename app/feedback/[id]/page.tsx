@@ -54,7 +54,13 @@ function FeedbackCard({ eventId }: { eventId: string }) {
         </Link>
       </motion.div>
     );
-  if (eligible && !eligible.ok)
+  if (!eligible)
+    return (
+      <main className="mx-auto flex min-h-[50vh] max-w-md items-center justify-center p-8">
+        <span className="h-8 w-8 animate-spin rounded-full border-4 border-cardinal border-t-transparent" />
+      </main>
+    );
+  if (!eligible.ok)
     return (
       <main className="mx-auto max-w-md p-8 text-center">
         <Lock className="mx-auto h-12 w-12 text-muted-foreground" />

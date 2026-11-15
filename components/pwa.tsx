@@ -9,7 +9,15 @@ export function PwaInstall() {
   const [deferred, setDeferred] = React.useState<BIPEvent | null>(null);
   const [iosHint, setIosHint] = React.useState(false);
   React.useEffect(() => {
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+    if ("serviceWorker" in navigator) {
+      if (process.env.NODE_ENV === "production") {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      } else {
+        // Dev chunk URLs aren't content-hashed, so a cache-first SW would serve stale code after edits.
+        navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister())).catch(() => {});
+        if ("caches" in window) caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+      }
+    }
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BIPEvent);

@@ -128,3 +128,29 @@ export function slotsToCells(slots: FreeSlot[]): string[] {
   }
   return cells;
 }
+
+type Timed = { date: string; endDate?: string | null; startTime: string; endTime: string };
+
+/** Start/end of an event as local-time Dates (end falls on endDate for multi-day events). */
+export function eventWindow(e: Timed): { start: Date; end: Date } {
+  const at = (date: string, hhmm: string) => {
+    const [y, mo, d] = date.split("-").map((x) => parseInt(x, 10));
+    const min = toMinutes(hhmm);
+    return new Date(y, mo - 1, d, Math.floor(min / 60), min % 60);
+  };
+  const start = at(e.date, e.startTime);
+  let end = at(e.endDate || e.date, e.endTime);
+  if (end <= start) end = new Date(end.getTime() + 24 * 60 * 60 * 1000); // runs past midnight
+  return { start, end };
+}
+
+/** True only while the system clock is inside the event's start–end window. */
+export function isHappeningNow(e: Timed, now = new Date()): boolean {
+  const { start, end } = eventWindow(e);
+  return now >= start && now < end;
+}
+
+/** The "Live" tag: the org has opened the event AND it is actually happening right now. */
+export function isLiveNow(e: Timed & { status: string }, now = new Date()): boolean {
+  return e.status === "live" && isHappeningNow(e, now);
+}

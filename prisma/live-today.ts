@@ -1,0 +1,63 @@
+// Extra events that are live today and run until 11pm, so the demo always has something live in the evening.
+// Used by seed.ts (fresh DB) and add-live-today.ts (insert into an existing DB without reseeding).
+const A11Y = "Step-free venue with elevator access. Request captions or ASL by emailing the org 5 days ahead.";
+
+export function liveTodayEvents(today: string) {
+  return [
+    {
+      id: "ev_wic_cowork",
+      orgId: "org_wic",
+      title: "Hack & Chill: Open Co-working Night",
+      description: "Bring whatever you're working on — problem sets, side projects, applications — and co-work with WiC. Mentors float around to help. Boba and snacks all night.",
+      eventType: "social",
+      date: today,
+      startTime: "17:00",
+      endTime: "23:00",
+      venueId: "v_seminar",
+      foodType: "free" as const,
+      budget: 150,
+      capacity: 40,
+      tags: ["coding", "women-in-tech", "social", "hands-on", "food"],
+      accessibilityNotes: A11Y,
+      color: "#1E3A8A",
+      status: "live" as const,
+    },
+    {
+      id: "ev_ai_demo_hour",
+      orgId: "org_ai",
+      title: "Late-Night Demo Hour: Show Your AI Project",
+      description: "Open mic for AI projects: five-minute demos, quick feedback from AI@USC officers, and a crowd vote for best demo. Watching is welcome too. Pizza at 9.",
+      eventType: "talk",
+      date: today,
+      startTime: "18:30",
+      endTime: "23:00",
+      venueId: "v_auditorium",
+      foodType: "free" as const,
+      goodies: "Best-demo prize",
+      budget: 250,
+      capacity: 150,
+      tags: ["ai-ml", "coding", "entrepreneurship", "talk", "food"],
+      accessibilityNotes: A11Y,
+      color: "#4C1D95",
+      status: "live" as const,
+    },
+    {
+      id: "ev_isa_chai",
+      orgId: "org_isa",
+      title: "Late-Night Chai & Antakshari",
+      description: "Unwind with masala chai, samosas and a rowdy round of antakshari (the Bollywood song game). Come solo or bring friends — teams form at the door.",
+      eventType: "cultural",
+      date: today,
+      startTime: "19:30",
+      endTime: "23:00",
+      venueId: "v_lounge",
+      foodType: "free" as const,
+      budget: 200,
+      capacity: 90,
+      tags: ["culture", "music", "social", "food"],
+      accessibilityNotes: A11Y,
+      color: "#C2185B",
+      status: "live" as const,
+    },
+  ];
+}

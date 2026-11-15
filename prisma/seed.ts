@@ -17,6 +17,7 @@ import { round } from "../lib/utils";
 import { hashPassword } from "../lib/auth";
 import { importUscSchedule, recomputeFreeSlots } from "../lib/services/schedule";
 import { applySwipeContext } from "../lib/services/preferences";
+import { liveTodayEvents } from "./live-today";
 
 export const DEMO_PASSWORD = "trojan123";
 
@@ -333,6 +334,8 @@ export async function main() {
     color: "#3F6212",
     status: "live",
   };
+  // More live events today, running until 11pm.
+  const liveLate: E[] = liveTodayEvents(TODAY);
   const tue1 = nextDate(2, 2);
   const upcoming: E[] = [
     { id: "ev_paper", orgId: "org_ai", title: "LLM Paper Reading Group: Attention Is All You Need", description: "We read and discuss the transformer paper together — no prior reading required, slides provided. Chai and samosas.", eventType: "talk", date: tue1, startTime: "18:00", endTime: "19:30", venueId: "v_seminar", foodType: "free", budget: 120, capacity: 40, tags: ["ai-ml", "research", "talk", "food"], color: "#4C1D95", status: "published" },
@@ -430,7 +433,7 @@ export async function main() {
   const fireside = upcoming.find((e) => e.id === "ev_startup")!;
   fireside.format = "hybrid";
   fireside.virtualUrl = "https://usc.zoom.us/j/0000000000";
-  const all = [...past, live, live2, ...upcoming];
+  const all = [...past, live, live2, ...liveLate, ...upcoming];
   const vectors = await embed(all.map((e) => eventText({ ...e, tags: e.tags })), { log: false });
   const vecById = new Map<string, number[]>();
   for (let i = 0; i < all.length; i++) {
@@ -671,6 +674,7 @@ export async function main() {
   // Live event: partway through its funnel (Simulate adds the rest during the demo).
   populate(live, { right: 26, left: { time: 4, topic: 3, vague: 2, "not-for-me": 2 }, preReg: 0.85, reg: 0.6, check: 0.35, realRight: ["stu_sofia"], feedback: [] }, 4);
   populate(live2, { right: 18, left: { time: 3, topic: 2 }, preReg: 0.9, reg: 0.7, check: 0.4, realRight: ["stu_priya"], feedback: [] }, 3);
+  for (const e of liveLate) populate(e, { right: 14, left: { time: 2, topic: 2 }, preReg: 0.85, reg: 0.7, check: 0.4, feedback: [] }, 3);
 
   // Upcoming events — real students swipe by affinity; background students add volume.
   const realOnboarded = students.filter((s) => s.onboarded);
@@ -827,6 +831,7 @@ export async function main() {
   console.log(`   Intro to LLMs: ${ll.leftSwipes} left swipes, ${timeShare}% said "time"`);
   console.log(`   Student logins: priya@usc.edu, alex@usc.edu (new), … — password "${DEMO_PASSWORD}"`);
   console.log(`   Live events: "${live.title}" (${live.id}) and "${live2.title}" (${live2.id}) — AI@USC`);
+  console.log(`   Live until 11pm: ${liveLate.map((e) => `"${e.title}"`).join(", ")}`);
 }
 
 // Auto-run unless imported by a test harness.

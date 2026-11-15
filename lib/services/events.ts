@@ -230,13 +230,12 @@ export async function checkIn(studentId: string, eventId: string) {
   }
   const existing = await prisma.checkIn.findUnique({ where: { studentId_eventId: { studentId, eventId } } });
   if (existing) return { ok: true as const, already: true, checkIn: existing };
+  // Only registered attendees can check in — saved (pre-registered), waitlisted or unregistered students can't.
+  const reg = await prisma.registration.findUnique({ where: { studentId_eventId: { studentId, eventId } } });
+  if (!reg || reg.status !== "registered") {
+    return { ok: false as const, reason: reg?.status === "waitlisted" ? "You're on the waitlist — only registered attendees can check in." : "Register for this event before checking in." };
+  }
   const checkInRow = await prisma.checkIn.create({ data: { studentId, eventId } });
-  // Walk-ins count as registered so the funnel stays monotonic.
-  await prisma.registration.upsert({
-    where: { studentId_eventId: { studentId, eventId } },
-    create: { studentId, eventId, status: "registered" },
-    update: { status: "registered" },
-  });
   return { ok: true as const, already: false, checkIn: checkInRow };
 }
 
