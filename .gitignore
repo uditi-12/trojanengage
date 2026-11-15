@@ -6,3 +6,6 @@ prisma/dev.db-journal
 public/generated/*
 !public/generated/.gitkeep
 *.tsbuildinfo
+
+.vercel
+.env*

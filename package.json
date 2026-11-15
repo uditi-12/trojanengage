@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate",
     "db:reset": "prisma migrate reset --force",
     "setup": "prisma migrate dev --name init && prisma db seed",
     "dev:lan": "next dev -H 0.0.0.0"
