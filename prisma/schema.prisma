@@ -1,0 +1,228 @@
+// TrojanEngage — Prisma schema (SQLite).
+// SQLite has no native enums or JSON columns, so enum-like fields are Strings (documented
+// values in comments) and JSON fields are stringified text parsed via lib/json.ts helpers.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id               String         @id @default(cuid())
+  name             String
+  email            String?        @unique // login (USC email); null for background/simulated students
+  passwordHash     String? // scrypt "salt:hash"
+  avatarUrl        String
+  major            String
+  year             String
+  interests        String         @default("[]") // JSON string[]
+  goals            String         @default("[]") // JSON string[]: network | learn-skills | make-friends | free-food | career | culture
+  freeSlots        String         @default("[]") // JSON [{day:0-6,start,end}] — DERIVED from ScheduleBlocks (8am–10pm minus busy time)
+  tagWeights       String         @default("{}") // JSON {tag: number}
+  slotWeights      String         @default("{}") // JSON {"<day>-<morning|afternoon|evening|late>": number} learned from swipes/feedback
+  typeWeights      String         @default("{}") // JSON {eventType: number} learned from swipes/feedback
+  scheduleImportedAt DateTime? // when the USC class schedule was imported
+  profileEmbedding String         @default("[]") // JSON number[]
+  profileSentence  String?        // cached AI profile sentence
+  profileSwipeMark Int            @default(0) // swipe count when profileSentence was last refreshed
+  onboarded        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  friendships      Friendship[]   @relation("StudentFriendships")
+  friendOf         Friendship[]   @relation("FriendOf")
+  swipes           Swipe[]
+  registrations    Registration[]
+  checkIns         CheckIn[]
+  feedback         Feedback[]
+  schedule         ScheduleBlock[]
+}
+
+// Weekly recurring busy time. kind=class blocks come from the (simulated) USC registrar import and are
+// read-only; students can add/update/delete their own work/personal blocks.
+model ScheduleBlock {
+  id        String   @id @default(cuid())
+  studentId String
+  kind      String // class | work | personal | other
+  source    String   @default("manual") // usc-import | manual
+  title     String
+  location  String   @default("")
+  day       Int // 0=Sun … 6=Sat
+  start     String // HH:mm
+  end       String // HH:mm
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Friendship {
+  id        String  @id @default(cuid())
+  studentId String
+  friendId  String
+  student   Student @relation("StudentFriendships", fields: [studentId], references: [id], onDelete: Cascade)
+  friend    Student @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, friendId])
+}
+
+model Org {
+  id          String   @id @default(cuid())
+  name        String
+  logoUrl     String
+  category    String
+  description String
+  createdAt   DateTime      @default(now())
+  events      Event[]
+  chat        ChatMessage[]
+}
+
+model Venue {
+  id          String  @id @default(cuid())
+  name        String
+  capacity    Int
+  accessible  Boolean @default(true)
+  costPerHour Float   @default(0)
+  events      Event[]
+}
+
+model Event {
+  id                 String         @id @default(cuid())
+  orgId              String
+  title              String
+  description        String         @default("")
+  foodType           String         @default("none") // none | free | paid
+  goodies            String         @default("")
+  date               String         // YYYY-MM-DD (start date)
+  endDate            String? // YYYY-MM-DD for multi-day events (hackathons, conferences, festivals); null = same day
+  startTime          String         // HH:mm
+  endTime            String         // HH:mm (on endDate when multi-day)
+  budget             Float          @default(0)
+  capacity           Int            @default(50)
+  venueId            String?
+  location           String         @default("")
+  campus             String         @default("UPC") // UPC | HSC | off-campus | online
+  format             String         @default("in-person") // in-person | virtual | hybrid
+  virtualUrl         String? // Zoom/stream link for virtual & hybrid events
+  websiteUrl         String?
+  registrationUrl    String? // external RSVP (Engage, lu.ma, Eventbrite, Google Form)
+  eventType          String         @default("other") // workshop | social | cultural | career | talk | sports | other
+  audience           String         @default("all") // all | undergrad | grad | international | major-specific | members | faculty-staff | public
+  visibility         String         @default("public") // public | members-only
+  restrictions       String         @default("[]") // JSON string[]: usc-id-required | 18-plus | 21-plus | members-only | rsvp-required | waiver-required
+  coHosts            String         @default("[]") // JSON string[] of co-hosting org/department names
+  agenda             String         @default("[]") // JSON [{time:"18:00", title, day?}] — run of show / multi-session schedule
+  waitlistEnabled    Boolean        @default(true) // when full, new registrations are waitlisted
+  ticketCost         Float          @default(0)
+  tags               String         @default("[]") // JSON string[]
+  accessibilityNotes String         @default("")
+  flyerHeadline      String         @default("")
+  flyerTagline       String         @default("")
+  flyerColor         String         @default("#990000")
+  flyerImageUrl      String?
+  cardBlurb          String         @default("")
+  detailedSummary    String? // AI-written long summary shown to students (cached)
+  embedding          String         @default("[]") // JSON number[]
+  status             String         @default("draft") // draft | published | live | closed
+  createdAt          DateTime       @default(now())
+  org                Org            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  venue              Venue?         @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  swipes             Swipe[]
+  registrations      Registration[]
+  checkIns           CheckIn[]
+  feedback           Feedback[]
+  record             EventRecord?
+}
+
+model Swipe {
+  id        String   @id @default(cuid())
+  studentId String
+  eventId   String
+  direction String // right | left
+  reason    String? // time | topic | cost | vague | not-for-me
+  matchPct  Int? // interest match % shown on the card when swiped
+  rankPos   Int? // position in the ranked feed when swiped (0 = top)
+  dwellMs   Int? // how long the card was on screen
+  source    String   @default("feed") // feed | search | detail
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, eventId])
+}
+
+model Registration {
+  id           String   @id @default(cuid())
+  studentId    String
+  eventId      String
+  status       String   @default("pre-registered") // pre-registered (saved) | registered | waitlisted | cancelled
+  hasConflict  Boolean  @default(false)
+  conflictNote String?
+  createdAt    DateTime @default(now())
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, eventId])
+}
+
+model CheckIn {
+  id        String   @id @default(cuid())
+  studentId String
+  eventId   String
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, eventId])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  studentId String
+  eventId   String
+  rating    Int // 1-5
+  tag       String // primary tag (first selected): great-food | too-long | well-organized | bad-timing | learned-a-lot | crowded | boring | …
+  tags      String   @default("[]") // JSON string[] — all selected tags (multi-select)
+  comment   String?
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model EventRecord {
+  id             String   @id @default(cuid())
+  eventId        String   @unique
+  markdown       String
+  stats          String   @default("{}") // JSON
+  feedbackThemes String   @default("[]") // JSON
+  swipeInsights  String   @default("{}") // JSON
+  keepChange     String   @default("{\"keep\":[],\"change\":[]}") // JSON {keep:[],change:[]}
+  embedding      String   @default("[]") // JSON number[]
+  approved       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model AiLog {
+  id            String   @id @default(cuid())
+  feature       String
+  provider      String
+  model         String
+  inputSummary  String
+  outputSummary String
+  latencyMs     Int
+  usedFallback  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+// "Ask TrojanEngage" org chatbot: every prompt and answer is stored per org.
+model ChatMessage {
+  id           String   @id @default(cuid())
+  orgId        String
+  role         String // user | assistant
+  content      String
+  sources      String   @default("[]") // JSON [{eventId, title, recordId?}]
+  usedFallback Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  org          Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "TrojanEngage",
+    "slug": "trojanengage-usc",
+    "scheme": "trojanengage",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FBF9F7",
+    "ios": { "supportsTablet": false, "bundleIdentifier": "edu.usc.trojanengage" },
+    "android": {
+      "package": "edu.usc.trojanengage",
+      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#990000" }
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}
